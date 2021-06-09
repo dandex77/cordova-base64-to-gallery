@@ -87,22 +87,28 @@ public class Base64ToGallery extends CordovaPlugin {
                               + c.get(Calendar.MINUTE)
                               + c.get(Calendar.SECOND);
 
-      File folder;
-      folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        Context context = this.cordova.getActivity().getApplicationContext();
+        String uri = MediaStore.Images.Media.insertImage(context.getContentResolver(), bmp, prefix + date + ".png" , "");
+        Log.i("Base64ToGallery", uri.toString());
+        retVal = new File(uri);
+      } else {
+        File folder;
+        folder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
 
-      if (!folder.exists()) {
-        folder.mkdirs();
+        if (!folder.exists()) {
+          folder.mkdirs();
+        }
+
+        File imageFile = new File(folder, prefix + date + ".png");
+
+        FileOutputStream out = new FileOutputStream(imageFile);
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+        out.flush();
+        out.close();
+
+        retVal = imageFile;
       }
-
-      File imageFile = new File(folder, prefix + date + ".png");
-
-      FileOutputStream out = new FileOutputStream(imageFile);
-      bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-      out.flush();
-      out.close();
-
-      retVal = imageFile;
-
     } catch (Exception e) {
       Log.e("Base64ToGallery", "An exception occured while saving image: " + e.toString());
     }
